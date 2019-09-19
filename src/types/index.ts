@@ -20,7 +20,8 @@ export interface AxiosRequestConfig {
   data?: any,
   params?: any,
   headers?: any,
-  responseType?: XMLHttpRequestResponseType
+  responseType?: XMLHttpRequestResponseType,
+  timeout?: number // 请求的超时时间
 }
 
 

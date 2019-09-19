@@ -5,6 +5,7 @@ import {
 } from './types'
 
 import { parseHeaders } from './helpers/header'
+import { rejects } from 'assert'
 
 /***
  * 实现获取响应数据逻辑
@@ -12,14 +13,20 @@ import { parseHeaders } from './helpers/header'
  * */ 
 
 export default function xhr(config: AxiosRequestConfig): AxiosPromise {
-  return new Promise(resolve => {
-    const { data = null, url, method = 'get', headers, responseType } = config
+  return new Promise((resolve, reject) => {
+    const { data = null, url, method = 'get', headers, responseType, timeout } = config
 
     const request = new XMLHttpRequest()
 
     if (responseType) {
       request.responseType = responseType
     }
+
+    // timeout
+    if(timeout) {
+      request.timeout = timeout
+    }
+
 
     request.open(method.toUpperCase(), url, true)
 
@@ -36,6 +43,10 @@ export default function xhr(config: AxiosRequestConfig): AxiosPromise {
         return
       }
 
+      if (request.status === 0) {
+        return
+      }
+
       const responseHeaders = parseHeaders(request.getAllResponseHeaders())
 
       const responseData = responseType && responseType !== 'text' ? request.response : request.responseText
@@ -48,8 +59,41 @@ export default function xhr(config: AxiosRequestConfig): AxiosPromise {
         config,
         request
       }
-      resolve(response)
+      handleResponse(response)
     }
+
+    /***
+     * 处理非 200 状态码
+     * 对于一个正常的请求，往往会返回 200-300 之间的 HTTP 状态码
+     * 对于不在这个区间的状态码，我们也把它们认为是一种错误的情况做处理。
+     * */ 
+    function handleResponse(response: AxiosResponse) {
+      if (response.status >= 200 && response.status < 300) {
+        resolve(response)
+      } else {
+        reject(new Error(`Request failed with status code ${response.status}`))
+      }
+    }
+
+
+    /***
+     * 处理网络异常错误
+     * 当网络出现异常（比如不通）的时候发送请求会触发 XMLHttpRequest 对象实例的 error 事件
+     * 于是我们可以在 onerror 的事件回调函数中捕获此类错误。
+     * */ 
+    request.onerror = function handleError() {
+      reject(new Error('NetWork Error'))
+    }
+
+    /***
+     * 处理超时错误
+     * 我们可以设置某个请求的超时时间 timeout，
+     * 当请求发送后超过某个时间后仍然没收到响应，则请求自动终止，并触发 timeout 事件。
+     * */ 
+    request.ontimeout = function handleTimeout() {
+      reject(new Error(`Timeout of ${timeout} ms exceeded`))
+    }
+
 
     // 传入的 data 为空的时候，请求 header 配置 Content-Type 是没有意义的，于是我们把它删除。
     Object.keys(headers).forEach(name => {
