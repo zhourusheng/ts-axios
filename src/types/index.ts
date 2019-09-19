@@ -19,5 +19,33 @@ export interface AxiosRequestConfig {
   method?: Method,
   data?: any,
   params?: any,
-  headers?: any
+  headers?: any,
+  responseType?: XMLHttpRequestResponseType
+}
+
+
+/***
+ * 拿到 res 对象
+ * 服务端返回的数据 data
+ * HTTP 状态码status
+ * 状态消息 statusText
+ * 响应头 headers
+ * 请求配置对象 config 
+ * 请求的 XMLHttpRequest 对象实例 request
+ * 
+ */ 
+export interface AxiosResponse {
+  data: any,
+  status: number,
+  statusText: any,
+  headers: any,
+  config: AxiosRequestConfig,
+  request: any
+}
+
+
+// axios 函数返回的是一个 Promise 对象，
+// 我们可以定义一个 AxiosPromise 接口，它继承于 Promise<AxiosResponse> 这个泛型接口
+export interface AxiosPromise extends Promise<AxiosResponse> {
+
 }
