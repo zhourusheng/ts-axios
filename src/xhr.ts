@@ -3,7 +3,8 @@ import {
   AxiosPromise,
   AxiosResponse
 } from './types'
-import { resolve } from 'url'
+
+import { parseHeaders } from './helpers/header'
 
 /***
  * 实现获取响应数据逻辑
@@ -35,7 +36,7 @@ export default function xhr(config: AxiosRequestConfig): AxiosPromise {
         return
       }
 
-      const responseHeaders = request.getAllResponseHeaders()
+      const responseHeaders = parseHeaders(request.getAllResponseHeaders())
 
       const responseData = responseType && responseType !== 'text' ? request.response : request.responseText
 
